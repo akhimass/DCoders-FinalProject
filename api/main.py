@@ -1,20 +1,10 @@
 import uvicorn
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from .routers import (
-    customer,
-    orders,
-    menu_item,
-    order_item,
-    review,
-    payment,
-    promotion,
-    ingredient
-)
-from .routers import order_details
+from .routers import index as indexRoute
 from .models import model_loader
 from .dependencies.config import conf
-from .dependencies.database import Base, engine
+
 
 app = FastAPI()
 
@@ -28,19 +18,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Load models and create tables
 model_loader.index()
+indexRoute.load_routes(app)
 
-# Register routers
-app.include_router(customer.router)
-app.include_router(orders.router)
-app.include_router(menu_item.router)
-app.include_router(order_item.router)
-app.include_router(review.router)
-app.include_router(payment.router)
-app.include_router(promotion.router)
-app.include_router(ingredient.router)
-app.include_router(order_details.router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host=conf.app_host, port=conf.app_port)
