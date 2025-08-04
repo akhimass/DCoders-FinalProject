@@ -1,4 +1,5 @@
 # models/menu_item.py
+# Menu Item creation
 from sqlalchemy import Column, Integer, String, Float
 from ..dependencies.database import Base
 
