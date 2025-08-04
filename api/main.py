@@ -12,7 +12,7 @@ from .routers import (
     review
 )
 
-
+# Routers all Registered
 app = FastAPI()
 
 origins = ["*"]
