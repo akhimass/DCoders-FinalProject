@@ -1,4 +1,4 @@
-### Ingredient
+### Ingredients
 # models/ingredient.py
 from sqlalchemy import Column, Integer, String
 from ..dependencies.database import Base
