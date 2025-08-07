@@ -1,6 +1,6 @@
 # 🥪 Restaurant Order Management API
 
-A full-featured FastAPI backend for managing a sandwich restaurant, built for a Software Engineering course final project. This system handles menu items, customers, ingredients, reviews, orders, inventory, and promotional codes.
+A full-featured FastAPI backend for managing a sandwich restaurant, built for Software Engineering course final project. This system handles menu items, customers, ingredients, reviews, orders, inventory, and promotional codes.
 
 ---
 
