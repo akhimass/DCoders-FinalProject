@@ -4,6 +4,7 @@ from ..main import app
 import pytest
 from ..models import orders as model
 
+#tests
 # Create a test client for the app
 client = TestClient(app)
 
@@ -13,19 +14,12 @@ def db_session(mocker):
     return mocker.Mock()
 
 
-def test_create_order(db_session):
-    # Create a sample order
-    order_data = {
+def test_create_order_endpoint():
+    response = client.post("/orders", json={
         "customer_name": "John Doe",
         "description": "Test order"
-    }
-
-    order_object = model.Order(**order_data)
-
-    # Call the create function
-    created_order = controller.create(db_session, order_object)
-
-    # Assertions
-    assert created_order is not None
-    assert created_order.customer_name == "John Doe"
-    assert created_order.description == "Test order"
+    })
+    assert response.status_code == 200
+    data = response.json()
+    assert data["customer_name"] == "John Doe"
+    assert data["description"] == "Test order"

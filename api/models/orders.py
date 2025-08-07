@@ -3,7 +3,6 @@ from sqlalchemy.orm import relationship
 from sqlalchemy import DateTime
 from datetime import datetime
 from ..dependencies.database import Base
-created_at = Column(DateTime, default=datetime.utcnow)
 
 
 class Order(Base):
@@ -18,5 +17,6 @@ class Order(Base):
     tracking_number = Column(String(100), unique=True)
     order_type = Column(String(50))  # e.g., 'takeout', 'delivery'
     payment_status = Column(String(50))  # e.g., 'paid', 'pending'
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     order_details = relationship("OrderDetail", back_populates="order")

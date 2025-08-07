@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, FastAPI, status, Response
+from fastapi import APIRouter, Depends, Query, FastAPI, status, Response, HTTPException
 from sqlalchemy.orm import Session
 from ..controllers import orders as controller
 from ..schemas import orders as schema
@@ -6,6 +6,10 @@ from ..dependencies.database import engine, get_db
 from datetime import datetime
 from sqlalchemy import func
 from ..models.orders import Order
+from ..models.ingredient import Ingredient
+from ..models.recipes import Recipe
+from ..models.menu_item import MenuItem
+from ..models.promo_code import PromoCode
 
 # Orders update!
 router = APIRouter(
@@ -16,7 +20,39 @@ router = APIRouter(
 
 @router.post("/", response_model=schema.Order)
 def create(request: schema.OrderCreate, db: Session = Depends(get_db)):
-    return controller.create(db=db, request=request)
+    # Check ingredient availability and deduct quantities
+    for order_detail in request.order_details:
+        recipe_items = db.query(Recipe).filter(Recipe.sandwich_id == order_detail.menu_item_id).all()
+        for recipe_item in recipe_items:
+            ingredient = db.query(Ingredient).filter(Ingredient.id == recipe_item.ingredient_id).first()
+            if not ingredient or ingredient.quantity < recipe_item.quantity_needed:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Not enough {ingredient.name} in stock."
+                )
+            ingredient.quantity -= recipe_item.quantity_needed
+            db.add(ingredient)
+
+    # Calculate total price
+    total_price = 0
+    for order_detail in request.order_details:
+        menu_item = db.query(MenuItem).filter(MenuItem.id == order_detail.menu_item_id).first()
+        total_price += menu_item.price * order_detail.quantity
+
+    # Apply promo code if valid
+    if request.promo_code:
+        promo = db.query(PromoCode).filter(PromoCode.code == request.promo_code).first()
+        if promo is not None:
+            if promo.expires_at >= datetime.utcnow():
+                discount = total_price * (promo.discount_percent / 100)
+                total_price -= discount
+            else:
+                raise HTTPException(status_code=400, detail="Invalid or expired promo code.")
+        else:
+            raise HTTPException(status_code=400, detail="Invalid or expired promo code.")
+
+    # Forward updated request and price to controller
+    return controller.create(db=db, request=request, total_price=total_price)
 
 
 @router.get("/", response_model=list[schema.Order])
