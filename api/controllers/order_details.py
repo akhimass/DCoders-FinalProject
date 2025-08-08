@@ -2,13 +2,14 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Response, Depends
 from ..models import order_details as model
 from sqlalchemy.exc import SQLAlchemyError
+from ..schemas.order_details import OrderDetailCreate
 
 
-def create(db: Session, request):
+def create(db: Session, request: OrderDetailCreate):
     new_item = model.OrderDetail(
         order_id=request.order_id,
         sandwich_id=request.sandwich_id,
-        amount=request.amount
+        quantity=request.quantity
     )
 
     try:
@@ -31,7 +32,7 @@ def read_all(db: Session):
     return result
 
 
-def read_one(db: Session, item_id):
+def read_one(db: Session, item_id: int):
     try:
         item = db.query(model.OrderDetail).filter(model.OrderDetail.id == item_id).first()
         if not item:
@@ -42,7 +43,7 @@ def read_one(db: Session, item_id):
     return item
 
 
-def update(db: Session, item_id, request):
+def update(db: Session, item_id: int, request: OrderDetailCreate):
     try:
         item = db.query(model.OrderDetail).filter(model.OrderDetail.id == item_id)
         if not item.first():
@@ -56,7 +57,7 @@ def update(db: Session, item_id, request):
     return item.first()
 
 
-def delete(db: Session, item_id):
+def delete(db: Session, item_id: int):
     try:
         item = db.query(model.OrderDetail).filter(model.OrderDetail.id == item_id)
         if not item.first():

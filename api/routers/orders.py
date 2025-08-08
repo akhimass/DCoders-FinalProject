@@ -21,23 +21,27 @@ router = APIRouter(
 @router.post("/", response_model=schema.Order)
 def create(request: schema.OrderCreate, db: Session = Depends(get_db)):
     # Check ingredient availability and deduct quantities
-    for order_detail in request.order_details:
-        recipe_items = db.query(Recipe).filter(Recipe.sandwich_id == order_detail.menu_item_id).all()
-        for recipe_item in recipe_items:
-            ingredient = db.query(Ingredient).filter(Ingredient.id == recipe_item.ingredient_id).first()
-            if not ingredient or ingredient.quantity < recipe_item.quantity_needed:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"Not enough {ingredient.name} in stock."
-                )
-            ingredient.quantity -= recipe_item.quantity_needed
-            db.add(ingredient)
+    if request.order_details:
+        for order_detail in request.order_details:
+            recipe_items = db.query(Recipe).filter(Recipe.sandwich_id == order_detail.sandwich_id).all()
+            for recipe_item in recipe_items:
+                ingredient = db.query(Ingredient).filter(Ingredient.id == recipe_item.ingredient_id).first()
+                if not ingredient or ingredient.quantity < recipe_item.quantity_needed:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Not enough {ingredient.name} in stock."
+                    )
+                ingredient.quantity -= recipe_item.quantity_needed
+                db.add(ingredient)
 
     # Calculate total price
     total_price = 0
-    for order_detail in request.order_details:
-        menu_item = db.query(MenuItem).filter(MenuItem.id == order_detail.menu_item_id).first()
-        total_price += menu_item.price * order_detail.quantity
+    if request.order_details:
+        for order_detail in request.order_details:
+            menu_item = db.query(MenuItem).filter(MenuItem.id == order_detail.sandwich_id).first()
+            if not menu_item:
+                raise HTTPException(status_code=404, detail=f"Menu item with ID {order_detail.sandwich_id} not found.")
+            total_price += menu_item.price * order_detail.quantity
 
     # Apply promo code if valid
     if request.promo_code:

@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, FastAPI, status, Response
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 from ..controllers import order_details as controller
 from ..schemas import order_details as schema
-from ..dependencies.database import engine, get_db
+from ..dependencies.database import get_db
 
 router = APIRouter(
     tags=['Order Details'],
@@ -10,7 +10,7 @@ router = APIRouter(
 )
 
 
-@router.post("/", response_model=schema.OrderDetail)
+@router.post("/", response_model=schema.OrderDetail, status_code=status.HTTP_201_CREATED)
 def create(request: schema.OrderDetailCreate, db: Session = Depends(get_db)):
     return controller.create(db=db, request=request)
 
@@ -30,9 +30,12 @@ def update(item_id: int, request: schema.OrderDetailUpdate, db: Session = Depend
     return controller.update(db=db, request=request, item_id=item_id)
 
 
-@router.delete("/{item_id}")
+@router.delete("/{item_id}", status_code=status.HTTP_200_OK)
 def delete(item_id: int, db: Session = Depends(get_db)):
-    return controller.delete(db=db, item_id=item_id)
+    controller.delete(db=db, item_id=item_id)
+    return {"message": f"Order detail with ID {item_id} deleted successfully."}
 
-def load_routes(app):
+from fastapi import FastAPI
+
+def load_routes(app: FastAPI):
     app.include_router(router)
